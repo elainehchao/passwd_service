@@ -24,3 +24,6 @@ hs_err_pid*
 
 MAC System Files
 *.DS_Store
+
+Maven Target
+target/
