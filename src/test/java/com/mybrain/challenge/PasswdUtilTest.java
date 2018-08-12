@@ -13,7 +13,7 @@ import org.json.*;
 public class PasswdUtilTest
     extends TestCase
 {
-    // private PasswdUtil mPasswdUtil;
+    private PasswdUtil mPasswdUtil;
 
     /**
      * Create the test case
@@ -34,47 +34,15 @@ public class PasswdUtilTest
     }
 
     protected void setUp() {
-        // mPasswdUtil = new PasswdUtil();
+        mPasswdUtil = new PasswdUtil("src/test/java/com/mybrain/challenge/passwd_test1.txt");
     }
 
     /**
-     * Test to check passwdutil get users for a single user
-     * will return the proper json string
-     */
-    public void testGetUsersSingleUserReturnsJsonString()
-    {
-        String actualString = "nobody:*:-2:-2:Unprivileged User:/var/empty:/usr/bin/false";
-        Reader inputString = new StringReader(actualString);
-        BufferedReader inputBuffer = new BufferedReader(inputString);
-
-        JSONArray expectedArray = new JSONArray();
-        JSONObject expectedObject = new JSONObject()
-          .put("name", "nobody")
-          .put("uid", "-2")
-          .put("gid", "-2")
-          .put("comment", "Unprivileged User")
-          .put("home", "/var/empty")
-          .put("shell", "/usr/bin/false");
-        expectedArray.put(expectedObject);
-
-        try {
-            assertEquals(expectedArray.toString(), PasswdUtil.getUsers(inputBuffer));
-        } catch (IOException exception) {
-            fail("IOException thrown");
-        }
-    }
-
-    /**
-     * Test to check passwdutil get users for a single user
+     * Test to check passwdutil get users for multiple users
      * will return the proper json string
      */
     public void testGetUsersMultipleUsersReturnsJsonString()
     {
-        String actualString = "nobody:*:-2:-2:Unprivileged User:/var/empty:/usr/bin/false\r\n"
-                            + "root:*:0:0:System Administrator:/var/root:/bin/sh";
-        Reader inputString = new StringReader(actualString);
-        BufferedReader inputBuffer = new BufferedReader(inputString);
-
         JSONArray expectedArray = new JSONArray();
         JSONObject expectedObject1 = new JSONObject()
           .put("name", "nobody")
@@ -94,10 +62,170 @@ public class PasswdUtilTest
           .put("shell", "/bin/sh");
         expectedArray.put(expectedObject2);
 
-        try {
-            assertEquals(expectedArray.toString(), PasswdUtil.getUsers(inputBuffer));
-        } catch (IOException exception) {
-            fail("IOException thrown");
-        }
+        JSONObject expectedObject3 = new JSONObject()
+          .put("name", "user")
+          .put("uid", "4")
+          .put("gid", "0")
+          .put("comment", "System User")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject3);
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsers());
+    }
+
+    public void testGetUserWithPositiveUID() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject3 = new JSONObject()
+          .put("name", "user")
+          .put("uid", "4")
+          .put("gid", "0")
+          .put("comment", "System User")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject3);
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUserForUID("4"));
+    }
+
+    public void testGetUserWithNegativeUID() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject1 = new JSONObject()
+          .put("name", "nobody")
+          .put("uid", "-2")
+          .put("gid", "-2")
+          .put("comment", "Unprivileged User")
+          .put("home", "/var/empty")
+          .put("shell", "/usr/bin/false");
+        expectedArray.put(expectedObject1);
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUserForUID("-2"));
+    }
+
+    public void testQueryUserWithName() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject1 = new JSONObject()
+          .put("name", "nobody")
+          .put("uid", "-2")
+          .put("gid", "-2")
+          .put("comment", "Unprivileged User")
+          .put("home", "/var/empty")
+          .put("shell", "/usr/bin/false");
+        expectedArray.put(expectedObject1);
+
+        JSONObject query = new JSONObject()
+          .put("name", "nobody");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testQueryUserWithGID() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject1 = new JSONObject()
+          .put("name", "nobody")
+          .put("uid", "-2")
+          .put("gid", "-2")
+          .put("comment", "Unprivileged User")
+          .put("home", "/var/empty")
+          .put("shell", "/usr/bin/false");
+        expectedArray.put(expectedObject1);
+
+        JSONObject query = new JSONObject()
+          .put("gid", "-2");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testQueryUserWithComment() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject1 = new JSONObject()
+          .put("name", "nobody")
+          .put("uid", "-2")
+          .put("gid", "-2")
+          .put("comment", "Unprivileged User")
+          .put("home", "/var/empty")
+          .put("shell", "/usr/bin/false");
+        expectedArray.put(expectedObject1);
+
+        JSONObject query = new JSONObject()
+          .put("comment", "Unprivileged User");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testQueryUserWithHome() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject1 = new JSONObject()
+          .put("name", "nobody")
+          .put("uid", "-2")
+          .put("gid", "-2")
+          .put("comment", "Unprivileged User")
+          .put("home", "/var/empty")
+          .put("shell", "/usr/bin/false");
+        expectedArray.put(expectedObject1);
+
+        JSONObject query = new JSONObject()
+          .put("home", "/var/empty");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testQueryUserWithShell() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject1 = new JSONObject()
+          .put("name", "nobody")
+          .put("uid", "-2")
+          .put("gid", "-2")
+          .put("comment", "Unprivileged User")
+          .put("home", "/var/empty")
+          .put("shell", "/usr/bin/false");
+        expectedArray.put(expectedObject1);
+
+        JSONObject query = new JSONObject()
+          .put("shell", "/usr/bin/false");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testQueryUserWithShellMultiple() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject2 = new JSONObject()
+          .put("name", "root")
+          .put("uid", "0")
+          .put("gid", "0")
+          .put("comment", "System Administrator")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject2);
+
+        JSONObject expectedObject3 = new JSONObject()
+          .put("name", "user")
+          .put("uid", "4")
+          .put("gid", "0")
+          .put("comment", "System User")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject3);
+
+        JSONObject query = new JSONObject()
+          .put("shell", "/bin/sh");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testQueryUserWithHomeMultiple() {
+        JSONArray expectedArray = new JSONArray();
+        JSONObject expectedObject2 = new JSONObject()
+          .put("name", "root")
+          .put("uid", "0")
+          .put("gid", "0")
+          .put("comment", "System Administrator")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject2);
+
+        JSONObject expectedObject3 = new JSONObject()
+          .put("name", "user")
+          .put("uid", "4")
+          .put("gid", "0")
+          .put("comment", "System User")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject3);
+
+        JSONObject query = new JSONObject()
+          .put("home", "/var/root");
+        assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
     }
 }
