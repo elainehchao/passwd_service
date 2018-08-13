@@ -6,10 +6,13 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import org.json.JSONObject;
+import java.util.List;
+import java.util.ArrayList;
 
 public class PasswdService {
 
     private static PasswdUtil mPasswdUtil;
+    private static GroupsUtil mGroupsUtil;
 
     public static void main (String[] args) {
         System.out.println("Hello World");
@@ -18,7 +21,7 @@ public class PasswdService {
             // default
             int port = 8030;
             mPasswdUtil = new PasswdUtil("src/test/java/com/mybrain/challenge/passwd_test1.txt");
-
+            mGroupsUtil = new GroupsUtil("src/test/java/com/mybrain/challenge/groups_test1.txt");
             // Get the port to listen on
             if (args.length > 0) {
                 port = Integer.parseInt(args[0]);
@@ -49,10 +52,17 @@ public class PasswdService {
 
                 int requestStartIndex = sb.indexOf("GET") + "GET".length() + 2;
                 int requestEndIndex = sb.indexOf(" ", requestStartIndex);
-                // System.out.println("Request full string: " + sb.toString());
+                // System.out.println("Request full string: " + sb.toString() + " " + requestStartIndex + " " + requestEndIndex);
                 String request = sb.substring(requestStartIndex, requestEndIndex);
-                out.print(processRequest(request));
-
+                // System.out.println("Process groups request " + request);
+                int index = request.indexOf("/");
+                if (index > 0) {
+                    if (request.substring(0, index).equals("users")) {
+                        out.print(processUserRequest(request));
+                    } else if (request.substring(0, index).equals("groups")) {
+                        out.print(processGroupsRequest(request));
+                    }
+                }
                 out.close(); // Flush and close the output stream
                 in.close(); // Close the input stream
                 client.close(); // Close the socket
@@ -72,7 +82,7 @@ public class PasswdService {
     }
 
     /**
-    * Processes the client's request
+    * Processes the client's user request
     *
     * Possible request formats:
     *
@@ -80,7 +90,7 @@ public class PasswdService {
     * users/<uid>
     * users/query?<query>
     */
-    private static String processRequest(String request) {
+    private static String processUserRequest(String request) {
         String response = "";
         int index = request.indexOf("/");
         if (index < 0) {
@@ -104,6 +114,50 @@ public class PasswdService {
                     paramObject.put(key, value);
                 }
                 response = mPasswdUtil.getUsersForQuery(paramObject);
+            }
+        }
+        return response;
+    }
+
+    /**
+    * Processes the client's groups request
+    *
+    * Possible request formats:
+    *
+    * groups
+    * groups/<gid>
+    * groups/query?<query>
+    */
+    private static String processGroupsRequest(String request) {
+        String response = "";
+        int index = request.indexOf("/");
+        if (index < 0) {
+            // there are no additional parts to the request, get all users
+            response = mGroupsUtil.getGroups();
+        } else {
+            String groupRequest = request.substring(index + 1);
+            System.out.println("Prcess group request " + groupRequest);
+            if (groupRequest.indexOf("query") < 0) {
+                // not query, request for GID
+                response = mGroupsUtil.getGroupForGID(groupRequest);
+            } else {
+                int queryEndIndex = groupRequest.indexOf("query?") + "query?".length();
+                String query = groupRequest.substring(queryEndIndex);
+                String[] queryParams = query.split("&");
+                JSONObject paramObject = new JSONObject();
+                List<String> members = new ArrayList<String>();
+                for (int i = 0; i < queryParams.length; i++) {
+                    String[] individualParam = queryParams[i].split("=");
+                    String key = individualParam[0];
+                    String value = individualParam[1];
+                    if (!key.equals("member")) {
+                        paramObject.put(key, value);
+                    } else {
+                        members.add(value);
+                    }
+                }
+                paramObject.put(GroupsUtil.MEMBERS, members.toArray(new String[members.size()]));
+                response = mGroupsUtil.getGroupsForQuery(paramObject);
             }
         }
         return response;
