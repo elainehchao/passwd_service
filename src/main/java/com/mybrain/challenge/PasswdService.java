@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import org.json.JSONObject;
 
 public class PasswdService {
 
@@ -28,11 +29,10 @@ public class PasswdService {
 
             while (true) {
                 Socket client = ss.accept();
-                // Get input and output streams to talk to the client
+
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 PrintWriter out = new PrintWriter(client.getOutputStream());
 
-                // Start sending our reply, using the HTTP 1.1 protocol
                 out.print("HTTP/1.1 200 \r\n"); // Version & status code
                 out.print("Content-Type: text/plain\r\n"); // The type of data
                 out.print("Connection: close\r\n"); // Will close stream
@@ -47,11 +47,11 @@ public class PasswdService {
                     }
                 }
 
-                int queryStartIndex = sb.indexOf("GET") + "GET".length() + 1;
-                int queryEndIndex = sb.indexOf(" ", queryStartIndex);
-                String query = sb.substring(queryStartIndex, queryEndIndex);
-                String[] queryStrings = query.split("/");
-                out.print(processQuery(queryStrings));
+                int requestStartIndex = sb.indexOf("GET") + "GET".length() + 2;
+                int requestEndIndex = sb.indexOf(" ", requestStartIndex);
+                // System.out.println("Request full string: " + sb.toString());
+                String request = sb.substring(requestStartIndex, requestEndIndex);
+                out.print(processRequest(request));
 
                 out.close(); // Flush and close the output stream
                 in.close(); // Close the input stream
@@ -62,14 +62,6 @@ public class PasswdService {
             excep.printStackTrace();
         }
 
-        // Loop and wait for client connections and requests
-
-        // handle Get /users
-
-        // handle Get queury
-
-        // handle Get /users/<uid>
-
         // handle Get /users/<uid>/groups
 
         // handle Get /groups
@@ -79,13 +71,40 @@ public class PasswdService {
         // handle Get /groups/<gid>
     }
 
-    private static String processQuery(String[] args) {
+    /**
+    * Processes the client's request
+    *
+    * Possible request formats:
+    *
+    * users
+    * users/<uid>
+    * users/query?<query>
+    */
+    private static String processRequest(String request) {
         String response = "";
-        if (args[1].equals("users")) {
-            // request for all users
+        int index = request.indexOf("/");
+        if (index < 0) {
+            // there are no additional parts to the request, get all users
             response = mPasswdUtil.getUsers();
-        } else if (args[1].equals("groups")) {
-
+        } else {
+            String userRequest = request.substring(index + 1);
+            // System.out.println("Prcess user request " + userRequest);
+            if (userRequest.indexOf("query") < 0) {
+                // not query, request for UID
+                response = mPasswdUtil.getUserForUID(userRequest);
+            } else {
+                int queryEndIndex = userRequest.indexOf("query?") + "query?".length();
+                String query = userRequest.substring(queryEndIndex);
+                String[] queryParams = query.split("&");
+                JSONObject paramObject = new JSONObject();
+                for (int i = 0; i < queryParams.length; i++) {
+                    String[] individualParam = queryParams[i].split("=");
+                    String key = individualParam[0];
+                    String value = individualParam[1];
+                    paramObject.put(key, value);
+                }
+                response = mPasswdUtil.getUsersForQuery(paramObject);
+            }
         }
         return response;
     }

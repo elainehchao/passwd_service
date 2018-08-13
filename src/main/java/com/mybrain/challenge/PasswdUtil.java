@@ -58,7 +58,7 @@ public class PasswdUtil {
                 System.err.println("IO Exception");
             }
         } catch (FileNotFoundException exception) {
-            System.err.println("File not found");
+            System.err.println("Passwd File not found");
         }
     }
 
