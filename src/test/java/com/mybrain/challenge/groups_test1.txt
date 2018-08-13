@@ -1,0 +1,4 @@
+certusers:*:29:root,_jabber,_postfix,_cyrus,_calendar,_dovecot
+netusers:*:52:
+_www:*:70:_devicemgr,_teamsserver
+operator:*:-5:root
