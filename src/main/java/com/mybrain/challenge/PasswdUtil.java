@@ -15,6 +15,8 @@ public class PasswdUtil {
     private String mPasswdFilePath;
     private JSONArray mEntries;
 
+    long mFileReadTimestamp = 0L;
+
     public PasswdUtil() {
         mPasswdFilePath = "/etc/passwd";
         loadEntries();
@@ -29,6 +31,7 @@ public class PasswdUtil {
         File file = null;
         BufferedReader reader = null;
         file = new File(mPasswdFilePath);
+        mFileReadTimestamp = file.lastModified();
         reader = new BufferedReader(new FileReader(file));
         return reader;
     }
@@ -80,6 +83,7 @@ public class PasswdUtil {
     * }]
     */
     public String getUsers() {
+        checkFileUpdated();
         if (mEntries != null) {
             return mEntries.toString();
         }
@@ -87,6 +91,7 @@ public class PasswdUtil {
     }
 
     public String getUsersForQuery(JSONObject queryParams) {
+        checkFileUpdated();
         if (mEntries != null) {
             int queryMask = 0;
             String queryUID = "";
@@ -198,6 +203,7 @@ public class PasswdUtil {
     }
 
     public String getUserForUID(String uid) {
+        checkFileUpdated();
         if (mEntries != null) {
             JSONArray results = new JSONArray();
             for (int i = 0; i < mEntries.length(); i++) {
@@ -212,6 +218,7 @@ public class PasswdUtil {
     }
 
     public String getGIDForUID(String uid) {
+        checkFileUpdated();
         if (mEntries != null) {
             JSONArray results = new JSONArray();
             for (int i = 0; i < mEntries.length(); i++) {
@@ -222,5 +229,14 @@ public class PasswdUtil {
             }
         }
         return "";
+    }
+
+    public void checkFileUpdated() {
+        File file = new File(mPasswdFilePath);
+        System.out.println("File last read: " + mFileReadTimestamp);
+        System.out.println("File last modified " + file.lastModified());
+        if (mFileReadTimestamp < file.lastModified()) {
+            loadEntries();
+        }
     }
 }

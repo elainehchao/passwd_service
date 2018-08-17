@@ -63,6 +63,7 @@ public class GroupsUtil {
     }
 
     public String getGroups() {
+        checkFileUpdated();
         if (mEntries != null) {
             return mEntries.toString();
         }
@@ -70,6 +71,7 @@ public class GroupsUtil {
     }
 
     public String getGroupsForQuery(JSONObject queryParams) {
+        checkFileUpdated();
         if (mEntries != null) {
             int queryMask = 0;
 
@@ -152,6 +154,7 @@ public class GroupsUtil {
     }
 
     public String getGroupForGID(String gid) {
+        checkFileUpdated();
         if (mEntries != null) {
             JSONArray results = new JSONArray();
             for (int i = 0; i < mEntries.length(); i++) {
@@ -163,5 +166,14 @@ public class GroupsUtil {
             return results.toString();
         }
         return "";
+    }
+
+    public void checkFileUpdated() {
+        File file = new File(mGroupsFilePath);
+        System.out.println("File last read: " + mFileReadTimestamp);
+        System.out.println("File last modified " + file.lastModified());
+        if (mFileReadTimestamp < file.lastModified()) {
+            loadEntries();
+        }
     }
 }
