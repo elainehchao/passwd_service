@@ -1,3 +1,4 @@
 nobody:*:-2:-2:Unprivileged User:/var/empty:/usr/bin/false
 root:*:0:0:System Administrator:/var/root:/bin/sh
 user:*:4:0:System User:/var/root:/bin/sh
+user2:*:5:29:System User2:/var/root:/bin/sh

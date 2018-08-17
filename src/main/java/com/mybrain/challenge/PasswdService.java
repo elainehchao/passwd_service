@@ -52,17 +52,17 @@ public class PasswdService {
 
                 int requestStartIndex = sb.indexOf("GET") + "GET".length() + 2;
                 int requestEndIndex = sb.indexOf(" ", requestStartIndex);
-                // System.out.println("Request full string: " + sb.toString() + " " + requestStartIndex + " " + requestEndIndex);
+                System.out.println("Request full string: " + sb.toString() + " " + requestStartIndex + " " + requestEndIndex);
                 String request = sb.substring(requestStartIndex, requestEndIndex);
-                // System.out.println("Process groups request " + request);
-                int index = request.indexOf("/");
-                if (index > 0) {
-                    if (request.substring(0, index).equals("users")) {
+                System.out.println("Process groups request " + request);
+                // int index = request.indexOf("/");
+                // if (index > 0) {
+                    if (request.substring(0, "users".length()).equals("users")) {
                         out.print(processUserRequest(request));
-                    } else if (request.substring(0, index).equals("groups")) {
+                    } else if (request.substring(0, "groups".length()).equals("groups")) {
                         out.print(processGroupsRequest(request));
                     }
-                }
+                // }
                 out.close(); // Flush and close the output stream
                 in.close(); // Close the input stream
                 client.close(); // Close the socket
@@ -74,11 +74,6 @@ public class PasswdService {
 
         // handle Get /users/<uid>/groups
 
-        // handle Get /groups
-
-        // handle Get /groups queury
-
-        // handle Get /groups/<gid>
     }
 
     /**
@@ -89,19 +84,28 @@ public class PasswdService {
     * users
     * users/<uid>
     * users/query?<query>
+    * users/<uid>/groups
     */
     private static String processUserRequest(String request) {
         String response = "";
         int index = request.indexOf("/");
         if (index < 0) {
             // there are no additional parts to the request, get all users
+            System.out.println("Passwdutil get users");
             response = mPasswdUtil.getUsers();
         } else {
             String userRequest = request.substring(index + 1);
-            // System.out.println("Prcess user request " + userRequest);
+            System.out.println("Prcess user request " + userRequest);
             if (userRequest.indexOf("query") < 0) {
-                // not query, request for UID
-                response = mPasswdUtil.getUserForUID(userRequest);
+
+                if (userRequest.indexOf("groups") < 0) {
+                    // not query, request for UID
+                    response = mPasswdUtil.getUserForUID(userRequest);
+                } else {
+                    String uid = userRequest.substring(0, userRequest.indexOf("/"));
+                    System.out.println("Parse uid: " + uid + " " + mPasswdUtil.getGIDForUID(uid));
+                    response = mGroupsUtil.getGroupForGID(mPasswdUtil.getGIDForUID(uid));
+                }
             } else {
                 int queryEndIndex = userRequest.indexOf("query?") + "query?".length();
                 String query = userRequest.substring(queryEndIndex);
@@ -116,6 +120,7 @@ public class PasswdService {
                 response = mPasswdUtil.getUsersForQuery(paramObject);
             }
         }
+        System.out.println("Response: " + response);
         return response;
     }
 

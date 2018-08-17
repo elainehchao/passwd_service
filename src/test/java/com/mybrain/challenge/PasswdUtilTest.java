@@ -70,6 +70,15 @@ public class PasswdUtilTest
           .put("home", "/var/root")
           .put("shell", "/bin/sh");
         expectedArray.put(expectedObject3);
+
+        JSONObject expectedObject4 = new JSONObject()
+          .put("name", "user2")
+          .put("uid", "5")
+          .put("gid", "29")
+          .put("comment", "System User2")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject4);
         assertEquals(expectedArray.toString(), mPasswdUtil.getUsers());
     }
 
@@ -199,6 +208,15 @@ public class PasswdUtilTest
           .put("shell", "/bin/sh");
         expectedArray.put(expectedObject3);
 
+        JSONObject expectedObject4 = new JSONObject()
+          .put("name", "user2")
+          .put("uid", "5")
+          .put("gid", "29")
+          .put("comment", "System User2")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject4);
+
         JSONObject query = new JSONObject()
           .put("shell", "/bin/sh");
         assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
@@ -224,8 +242,21 @@ public class PasswdUtilTest
           .put("shell", "/bin/sh");
         expectedArray.put(expectedObject3);
 
+        JSONObject expectedObject4 = new JSONObject()
+          .put("name", "user2")
+          .put("uid", "5")
+          .put("gid", "29")
+          .put("comment", "System User2")
+          .put("home", "/var/root")
+          .put("shell", "/bin/sh");
+        expectedArray.put(expectedObject4);
+
         JSONObject query = new JSONObject()
           .put("home", "/var/root");
         assertEquals(expectedArray.toString(), mPasswdUtil.getUsersForQuery(query));
+    }
+
+    public void testGetGIDForUser() {
+        assertEquals("-2", mPasswdUtil.getGIDForUID("-2"));
     }
 }

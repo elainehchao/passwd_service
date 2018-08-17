@@ -210,4 +210,17 @@ public class PasswdUtil {
         }
         return "";
     }
+
+    public String getGIDForUID(String uid) {
+        if (mEntries != null) {
+            JSONArray results = new JSONArray();
+            for (int i = 0; i < mEntries.length(); i++) {
+                JSONObject currentObject = (JSONObject) mEntries.get(i);
+                if (currentObject.getString(UID).equals(uid)) {
+                    return currentObject.getString(GID);
+                }
+            }
+        }
+        return "";
+    }
 }
