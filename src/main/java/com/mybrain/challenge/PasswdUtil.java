@@ -45,17 +45,19 @@ public class PasswdUtil {
             mEntries = new JSONArray();
             try {
                 while ((entry = reader.readLine()) != null) {
-                    splitEntry = entry.split(":");
+                    if (entry.indexOf("#") < 0) {
+                        splitEntry = entry.split(":");
 
-                    // 2nd entry is password entry, so skipt this
-                    JSONObject entryObject = new JSONObject()
-                      .put(NAME, splitEntry[0])
-                      .put(UID, splitEntry[2])
-                      .put(GID, splitEntry[3])
-                      .put(COMMENT, splitEntry[4])
-                      .put(HOME, splitEntry[5])
-                      .put(SHELL, splitEntry[6]);
-                    mEntries.put(entryObject);
+                        // 2nd entry is password entry, so skipt this
+                        JSONObject entryObject = new JSONObject()
+                          .put(NAME, splitEntry[0])
+                          .put(UID, splitEntry[2])
+                          .put(GID, splitEntry[3])
+                          .put(COMMENT, splitEntry[4])
+                          .put(HOME, splitEntry[5])
+                          .put(SHELL, splitEntry[6]);
+                        mEntries.put(entryObject);
+                    }
                 }
             } catch (IOException excep) {
                 System.err.println("IO Exception");

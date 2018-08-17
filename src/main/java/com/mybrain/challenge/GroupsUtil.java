@@ -13,6 +13,8 @@ public class GroupsUtil {
     private String mGroupsFilePath;
     private JSONArray mEntries;
 
+    long mFileReadTimestamp = 0L;
+
     public GroupsUtil() {
         mGroupsFilePath = "/etc/group";
         loadEntries();
@@ -27,6 +29,7 @@ public class GroupsUtil {
         File file = null;
         BufferedReader reader = null;
         file = new File(mGroupsFilePath);
+        mFileReadTimestamp = file.lastModified();
         reader = new BufferedReader(new FileReader(file));
         return reader;
     }
@@ -40,19 +43,21 @@ public class GroupsUtil {
             mEntries = new JSONArray();
             try {
                 while ((entry = reader.readLine()) != null) {
-                    splitEntry = entry.split(":");
+                    if (entry.indexOf("#") < 0) {
+                        splitEntry = entry.split(":");
 
-                    // 2nd entry is password entry, so skipt this
-                    JSONObject entryObject = new JSONObject()
-                      .put(NAME, splitEntry[0])
-                      .put(GID, splitEntry[2]);
+                        // 2nd entry is password entry, so skipt this
+                        JSONObject entryObject = new JSONObject()
+                          .put(NAME, splitEntry[0])
+                          .put(GID, splitEntry[2]);
 
-                    if (splitEntry.length == 4) {
-                        entryObject.put(MEMBERS, splitEntry[3].split(","));
-                    } else {
-                        entryObject.put(MEMBERS, new String[0]);
+                        if (splitEntry.length == 4) {
+                            entryObject.put(MEMBERS, splitEntry[3].split(","));
+                        } else {
+                            entryObject.put(MEMBERS, new String[0]);
+                        }
+                        mEntries.put(entryObject);
                     }
-                    mEntries.put(entryObject);
                 }
             } catch (IOException excep) {
                 System.err.println("IO Exception");

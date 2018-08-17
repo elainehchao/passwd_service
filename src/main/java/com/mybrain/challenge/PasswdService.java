@@ -15,17 +15,37 @@ public class PasswdService {
     private static GroupsUtil mGroupsUtil;
 
     public static void main (String[] args) {
-        System.out.println("Hello World");
         try {
 
             // default
             int port = 8030;
-            mPasswdUtil = new PasswdUtil("src/test/java/com/mybrain/challenge/passwd_test1.txt");
-            mGroupsUtil = new GroupsUtil("src/test/java/com/mybrain/challenge/groups_test1.txt");
             // Get the port to listen on
+
+            String passwdFilePath = "/etc/passwd";
+            String groupFilePath = "/etc/group";
+
+
             if (args.length > 0) {
                 port = Integer.parseInt(args[0]);
+                System.out.println("Input port: " + port);
+                if (args.length > 1) {
+                    passwdFilePath = args[1];
+                    System.out.println("Input passwd file path: " + passwdFilePath);
+                    if (args.length > 2) {
+                        groupFilePath = args[2];
+                        System.out.println("Input group file path: " + groupFilePath);
+                    } else {
+                        System.out.println("No group file path specified, using default " + groupFilePath);
+                    }
+                } else {
+                    System.out.println("No passwd file path speficied, using default " + passwdFilePath);
+                }
+            } else {
+                System.out.println("No port specified, using default " + port);
             }
+
+            mPasswdUtil = new PasswdUtil(passwdFilePath);
+            mGroupsUtil = new GroupsUtil(groupFilePath);
 
             System.out.println("Going to create server socket for port = " + port);
             ServerSocket ss = new ServerSocket(port);
