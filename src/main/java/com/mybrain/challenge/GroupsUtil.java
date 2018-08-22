@@ -168,7 +168,11 @@ public class GroupsUtil {
                     break;
                 }
             }
-            return results.toString();
+            if (results.length() > 0) {
+              return results.toString();
+            } else {
+              return "";
+            }
         }
         return "";
     }

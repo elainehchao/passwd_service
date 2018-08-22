@@ -56,11 +56,6 @@ public class PasswdService {
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 PrintWriter out = new PrintWriter(client.getOutputStream());
 
-                out.print("HTTP/1.1 200 \r\n"); // Version & status code
-                out.print("Content-Type: text/plain\r\n"); // The type of data
-                out.print("Connection: close\r\n"); // Will close stream
-                out.print("\r\n"); // End of headers
-
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = in.readLine()) != null) {
@@ -73,27 +68,60 @@ public class PasswdService {
                 int requestStartIndex = sb.indexOf("GET") + "GET".length() + 2;
                 int requestEndIndex = sb.indexOf(" ", requestStartIndex);
                 System.out.println("Request full string: " + sb.toString() + " " + requestStartIndex + " " + requestEndIndex);
-                String request = sb.substring(requestStartIndex, requestEndIndex);
-                System.out.println("Process groups request " + request);
-                // int index = request.indexOf("/");
-                // if (index > 0) {
-                    if (request.substring(0, "users".length()).equals("users")) {
-                        out.print(processUserRequest(request));
-                    } else if (request.substring(0, "groups".length()).equals("groups")) {
-                        out.print(processGroupsRequest(request));
+                String responsePayload = "";
+                if (requestStartIndex >= 0 && requestEndIndex >= 0) {
+                    String request = sb.substring(requestStartIndex, requestEndIndex);
+                    System.out.println("Process groups request " + request);
+                    ERequestType requestType = getRequestType(request);
+                    if (requestType == ERequestType.USER) {
+                        responsePayload = processUserRequest(request);
+                    } else if (requestType == ERequestType.GROUPS) {
+                        responsePayload = processGroupsRequest(request);
                     }
-                // }
-                out.close(); // Flush and close the output stream
-                in.close(); // Close the input stream
-                client.close(); // Close the socket
+                }
+
+                System.out.println("RESPONSE PAYLOAD: " + responsePayload);
+                if (!responsePayload.equals("")) {
+                    get200OKHeader(out);
+                    out.print(responsePayload);
+                } else {
+                    get404ErrorHeader(out);
+                }
+
+                out.close();
+                in.close();
+                client.close();
             }
         } catch (Exception excep) {
             System.err.println(excep);
             excep.printStackTrace();
         }
 
-        // handle Get /users/<uid>/groups
+    }
 
+    private static ERequestType getRequestType(String fullRequest) {
+        if (fullRequest.indexOf("users") >= 0) {
+            return ERequestType.USER;
+        } else if (fullRequest.indexOf("groups") >= 0) {
+            return ERequestType.GROUPS;
+        }
+        return ERequestType.INVALID;
+    }
+
+    private static void get200OKHeader(PrintWriter out) {
+      System.out.println("200OK");
+      out.print("HTTP/1.1 200 \r\n");
+      out.print("Content-Type: text/plain\r\n");
+      out.print("Connection: close\r\n");
+      out.print("\r\n");
+    }
+
+    private static void get404ErrorHeader(PrintWriter out) {
+      System.out.println("404");
+      out.print("HTTP/1.1 404 \r\n");
+      out.print("Content-Type: text/plain\r\n");
+      out.print("Connection: close\r\n");
+      out.print("\r\n");
     }
 
     /**
@@ -122,25 +150,33 @@ public class PasswdService {
                     // not query, request for UID
                     response = mPasswdUtil.getUserForUID(userRequest);
                 } else {
-                    String uid = userRequest.substring(0, userRequest.indexOf("/"));
-                    System.out.println("Parse uid: " + uid + " " + mPasswdUtil.getGIDForUID(uid));
-                    response = mGroupsUtil.getGroupForGID(mPasswdUtil.getGIDForUID(uid));
+                    int index2 = userRequest.indexOf("/");
+                    if (index2 >= 0) {
+                        String uid = userRequest.substring(0, index);
+                        System.out.println("Parse uid: " + uid + " " + mPasswdUtil.getGIDForUID(uid));
+                        response = mGroupsUtil.getGroupForGID(mPasswdUtil.getGIDForUID(uid));
+                    }
                 }
             } else {
-                int queryEndIndex = userRequest.indexOf("query?") + "query?".length();
-                String query = userRequest.substring(queryEndIndex);
-                String[] queryParams = query.split("&");
-                JSONObject paramObject = new JSONObject();
-                for (int i = 0; i < queryParams.length; i++) {
-                    String[] individualParam = queryParams[i].split("=");
-                    String key = individualParam[0];
-                    String value = individualParam[1];
-                    paramObject.put(key, value);
+                int index2 = userRequest.indexOf("query?");
+                if (index2 >= 0) {
+                    int queryEndIndex = index + "query?".length();
+                    String query = userRequest.substring(queryEndIndex);
+                    String[] queryParams = query.split("&");
+                    JSONObject paramObject = new JSONObject();
+                    for (int i = 0; i < queryParams.length; i++) {
+                        String[] individualParam = queryParams[i].split("=");
+                        System.out.println("Individual param " + individualParam.length);
+                        if (individualParam.length == 2) {
+                            String key = individualParam[0];
+                            String value = individualParam[1];
+                            paramObject.put(key, value);
+                        }
+                    }
+                    response = mPasswdUtil.getUsersForQuery(paramObject);
                 }
-                response = mPasswdUtil.getUsersForQuery(paramObject);
             }
         }
-        System.out.println("Response: " + response);
         return response;
     }
 
@@ -161,28 +197,33 @@ public class PasswdService {
             response = mGroupsUtil.getGroups();
         } else {
             String groupRequest = request.substring(index + 1);
-            System.out.println("Prcess group request " + groupRequest);
+            System.out.println("Process group request " + groupRequest);
             if (groupRequest.indexOf("query") < 0) {
                 // not query, request for GID
                 response = mGroupsUtil.getGroupForGID(groupRequest);
             } else {
-                int queryEndIndex = groupRequest.indexOf("query?") + "query?".length();
-                String query = groupRequest.substring(queryEndIndex);
-                String[] queryParams = query.split("&");
-                JSONObject paramObject = new JSONObject();
-                List<String> members = new ArrayList<String>();
-                for (int i = 0; i < queryParams.length; i++) {
-                    String[] individualParam = queryParams[i].split("=");
-                    String key = individualParam[0];
-                    String value = individualParam[1];
-                    if (!key.equals("member")) {
-                        paramObject.put(key, value);
-                    } else {
-                        members.add(value);
+                int index2 = groupRequest.indexOf("query?");
+                if (index2 >= 0){
+                    int queryEndIndex = index + "query?".length();
+                    String query = groupRequest.substring(queryEndIndex);
+                    String[] queryParams = query.split("&");
+                    JSONObject paramObject = new JSONObject();
+                    List<String> members = new ArrayList<String>();
+                    for (int i = 0; i < queryParams.length; i++) {
+                        String[] individualParam = queryParams[i].split("=");
+                        if (individualParam.length == 2) {
+                            String key = individualParam[0];
+                            String value = individualParam[1];
+                            if (!key.equals("member")) {
+                                paramObject.put(key, value);
+                            } else {
+                                members.add(value);
+                            }
+                        }
                     }
+                    paramObject.put(GroupsUtil.MEMBERS, members.toArray(new String[members.size()]));
+                    response = mGroupsUtil.getGroupsForQuery(paramObject);
                 }
-                paramObject.put(GroupsUtil.MEMBERS, members.toArray(new String[members.size()]));
-                response = mGroupsUtil.getGroupsForQuery(paramObject);
             }
         }
         return response;
