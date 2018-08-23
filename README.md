@@ -12,13 +12,7 @@ Java Runtime Environment
 
 ### Installing
 
-These installation and runtime instructions are for OSX
-
-1. Install Maven
-
-https://maven.apache.org/install.html
-
-To run and build the client, use the following instructions.
+To run and build the client, use the following instructions. These instructions were tested on OSX.
 
 1. Build the application
 
