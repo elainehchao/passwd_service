@@ -32,6 +32,9 @@ Input passwd file path: src/test/java/com/mybrain/challenge/passwd_test1.txt
 Input group file path: src/test/java/com/mybrain/challenge/groups_test1.txt
 Going to create server socket for port = 8030
 ```
+
+### Requests
+
 To run a client, you can enter the following into a web browser.
 
 ```
@@ -68,6 +71,13 @@ localhost:8030/groups/query?name=group1&member=root&member=root2
 7. Get a group for a gid
 ```
 localhost:8030/groups/3
+```
+
+### Response
+
+Here is an example response for the user query.
+```
+[{"uid":"-2","gid":"-2","shell":"/usr/bin/false","name":"nobody","comment":"Unprivileged User","home":"/var/empty"},{"uid":"0","gid":"0","shell":"/bin/sh","name":"root","comment":"System Administrator","home":"/var/root"}
 ```
 
 ## Running the tests
