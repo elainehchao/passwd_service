@@ -4,6 +4,13 @@ import java.io.*;
 import org.json.*;
 import java.util.Arrays;
 
+/**
+* This GroupsUtil handles all operations
+* that need to be performed on the groups file.
+*
+* This util assumes the underlying file can fit
+* in memory
+*/
 public class GroupsUtil {
 
     public static final String NAME = "name";
@@ -11,15 +18,21 @@ public class GroupsUtil {
     public static final String MEMBERS = "members";
 
     private String mGroupsFilePath;
-    private JSONArray mEntries;
+    private JSONArray mEntries; ///< holds the current groups entries in memory
 
     long mFileReadTimestamp = 0L;
 
+    /**
+    * Default constructor
+    */
     public GroupsUtil() {
         mGroupsFilePath = "/etc/group";
         loadEntries();
     }
 
+    /**
+    * Constructor for passing in test file
+    */
     public GroupsUtil(String filePath) {
         mGroupsFilePath = filePath;
         loadEntries();
@@ -67,6 +80,19 @@ public class GroupsUtil {
         }
     }
 
+    /**
+    * Get all groups on the system.
+    *
+    * @return a json string response
+    *
+    * For example:
+    *
+    * [{
+    *    "name": "group1",
+    *    "gid": 23,
+    *    "members": [member1, member2],
+    * }]
+    */
     public String getGroups() {
         checkFileUpdated();
         if (mEntries != null) {
@@ -75,6 +101,14 @@ public class GroupsUtil {
         return "";
     }
 
+    /**
+    * Get all groups that match a certain query
+    *
+    * This query expects queries in a key value pair format
+    *
+    * @param queryParams, the query in key value pair format
+    * @return a json string response
+    */
     public String getGroupsForQuery(JSONObject queryParams) {
         checkFileUpdated();
         if (mEntries != null) {
@@ -138,6 +172,7 @@ public class GroupsUtil {
     *
     * @param mask the bit mask
     * @param position the position to check if it is set
+    * @return true if the bit is set, false otherwise
     */
     private boolean isSet(int mask, int position) {
         return ((mask >> position) & 1) != 0;
@@ -153,11 +188,18 @@ public class GroupsUtil {
     *
     * @param mask the bit mask
     * @param position the position to set
+    * @return the mask
     */
     private int setBit(int mask, int position) {
         return mask | (1 << position);
     }
 
+    /**
+    * Get the group for a given group id
+    *
+    * @param gid, the gid
+    * @return a json string response
+    */
     public String getGroupForGID(String gid) {
         checkFileUpdated();
         if (mEntries != null) {
@@ -177,6 +219,11 @@ public class GroupsUtil {
         return "";
     }
 
+    /**
+    * Checks if the file is updated. If the file
+    * is updated, the entries are lazy loaded all back into
+    * memory
+    */
     public void checkFileUpdated() {
         File file = new File(mGroupsFilePath);
         System.out.println("File last read: " + mFileReadTimestamp);

@@ -3,6 +3,13 @@ package com.mybrain.challenge;
 import java.io.*;
 import org.json.*;
 
+/**
+* This PasswdUtil handles all operations
+* that need to be performed on the passwd file
+*
+* This util assumes the underlying file can fit
+* in memory
+*/
 public class PasswdUtil {
 
     public static final String UID = "uid";
@@ -13,15 +20,21 @@ public class PasswdUtil {
     public static final String SHELL = "shell";
 
     private String mPasswdFilePath;
-    private JSONArray mEntries;
+    private JSONArray mEntries; ///< holds the current users entries in memory
 
     long mFileReadTimestamp = 0L;
 
+    /**
+    * Default constructor
+    */
     public PasswdUtil() {
         mPasswdFilePath = "/etc/passwd";
         loadEntries();
     }
 
+    /**
+    * Constructor for passing in test file
+    */
     public PasswdUtil(String filePath) {
         mPasswdFilePath = filePath;
         loadEntries();
@@ -76,12 +89,12 @@ public class PasswdUtil {
     * For example:
     *
     * [{
-	*    "name": "root",
-	*    "uid": 0,
-	*    "gid": 23,
-	*    "comment": "i am root",
-	*    "home": "/root",
-	*    "shell": "/bin/bash"
+  	*    "name": "root",
+  	*    "uid": 0,
+  	*    "gid": 23,
+  	*    "comment": "i am root",
+  	*    "home": "/root",
+  	*    "shell": "/bin/bash"
     * }]
     */
     public String getUsers() {
@@ -92,6 +105,14 @@ public class PasswdUtil {
         return "";
     }
 
+    /**
+    * Get all users that match a certain query
+    *
+    * This query expects queries in a key value pair format
+    *
+    * @param queryParams, the query in key value pair format
+    * @return a json string response
+    */
     public String getUsersForQuery(JSONObject queryParams) {
         checkFileUpdated();
         if (mEntries != null) {
@@ -181,6 +202,7 @@ public class PasswdUtil {
     *
     * @param mask the bit mask
     * @param position the position to check if it is set
+    * @return true of the bit is set, false otherwise
     */
     private boolean isSet(int mask, int position) {
         return ((mask >> position) & 1) != 0;
@@ -199,11 +221,18 @@ public class PasswdUtil {
     *
     * @param mask the bit mask
     * @param position the position to set
+    * @return the new mask
     */
     private int setBit(int mask, int position) {
         return mask | (1 << position);
     }
 
+    /**
+    * Get the user for a given user id
+    *
+    * @param uid, the uid
+    * @return a json string response
+    */
     public String getUserForUID(String uid) {
         checkFileUpdated();
         if (mEntries != null) {
@@ -223,6 +252,12 @@ public class PasswdUtil {
         return "";
     }
 
+    /**
+    * Get the group id for a give user id
+    *
+    * @param uid, the uid
+    * @return a string response representing the group id
+    */
     public String getGIDForUID(String uid) {
         checkFileUpdated();
         if (mEntries != null) {
@@ -237,6 +272,11 @@ public class PasswdUtil {
         return "";
     }
 
+    /**
+    * Checks if the file is updated. If the file
+    * is updated, the entries are lazy loaded all back into
+    * memory
+    */
     public void checkFileUpdated() {
         File file = new File(mPasswdFilePath);
         System.out.println("File last read: " + mFileReadTimestamp);

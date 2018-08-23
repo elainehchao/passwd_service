@@ -9,18 +9,31 @@ import org.json.JSONObject;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+*
+* Main Passwd Service that accepts and processes
+* requests. This service returns a repsonse when there
+* is one available and returns a 404 error if the request
+* is malformed or if there is no response to a uid or gid
+* request.
+*
+*/
 public class PasswdService {
 
     private static PasswdUtil mPasswdUtil;
     private static GroupsUtil mGroupsUtil;
 
+    /**
+    * Main function. This function opens
+    * a socket and hendles incoming requests
+    */
     public static void main (String[] args) {
         try {
 
             // default
             int port = 8030;
-            // Get the port to listen on
 
+            // defaults
             String passwdFilePath = "/etc/passwd";
             String groupFilePath = "/etc/group";
 
@@ -99,6 +112,13 @@ public class PasswdService {
 
     }
 
+    /**
+    *
+    * Get the request type
+    *
+    * @return the request type
+    *
+    */
     private static ERequestType getRequestType(String fullRequest) {
         if (fullRequest.indexOf("users") >= 0) {
             return ERequestType.USER;
@@ -108,6 +128,11 @@ public class PasswdService {
         return ERequestType.INVALID;
     }
 
+    /**
+    *
+    * Populate the repsonse with the 200OK Header
+    *
+    */
     private static void get200OKHeader(PrintWriter out) {
       System.out.println("200OK");
       out.print("HTTP/1.1 200 \r\n");
@@ -116,6 +141,11 @@ public class PasswdService {
       out.print("\r\n");
     }
 
+    /**
+    *
+    * Populate the response with the 404 Error Header
+    *
+    */
     private static void get404ErrorHeader(PrintWriter out) {
       System.out.println("404");
       out.print("HTTP/1.1 404 \r\n");
